@@ -312,7 +312,7 @@
           currentTime = customStudyTime * 60;
           // Update study icon; ensure "reading.gif" exists
           document.getElementById('icon').src = 'reading.gif';
-          document.getElementById('progress').style.stroke = '#4caf50';
+          document.getElementById('progress').style.stroke = '#dd910e';
         }
       }
       document.getElementById('timerDisplay').textContent = formatTime(currentTime);
@@ -339,7 +339,7 @@
         isStudySession = true;
         currentTime = customStudyTime * 60;
         document.getElementById('icon').src = 'reading.gif';
-        document.getElementById('progress').style.stroke = '#4caf50';
+        document.getElementById('progress').style.stroke = '#dd910e';
         document.getElementById('timerDisplay').textContent = formatTime(currentTime);
         document.getElementById('progress').style.strokeDashoffset = 0;
         alarm.pause();
