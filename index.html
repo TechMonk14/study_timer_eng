@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced Study Timer</title>
+  <style>
+    /* General styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f5f5f5;
+      overflow-x: hidden;
+    }
+    /* Sidebar styles */
+    .sidenav {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      background-color: #333;
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidenav .closebtn {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      font-size: 36px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .sidenav .settings-content {
+      padding: 20px;
+    }
+    .sidenav label {
+      display: block;
+      margin-top: 10px;
+    }
+    .sidenav select,
+    .sidenav input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 4px;
+    }
+    .sidenav button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .sidenav button:hover {
+      background-color: #45a049;
+    }
+    /* Hamburger menu */
+    #openNav {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 30px;
+      cursor: pointer;
+      z-index: 1100;
+      color: #333;
+    }
+    /* Timer container */
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      position: relative;
+    }
+    /* Date and time display */
+    .date-time {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      text-align: right;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 8px 12px;
+      border-radius: 5px;
+    }
+    .date-time .date {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .date-time .time {
+      font-size: 18px;
+      font-family: 'Courier New', Courier, monospace;
+    }
+    /* Timer circle */
+    .timer-circle {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 60px 0;
+    }
+    .timer-circle svg {
+      transform: rotate(-90deg);
+    }
+    #progress {
+      transition: stroke-dashoffset 1s linear;
+    }
+    /* Icon inside circle */
+    #icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+    }
+    /* Timer text inside circle */
+    #timerDisplay {
+      position: absolute;
+      top: 70%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+    }
+    /* Start/Stop Button */
+    .controls button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .controls button:hover {
+      background-color: #45a049;
+    }
+    /* Quote and Affirmation */
+    #quoteDisplay,
+    #affirmationDisplay {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px 15px;
+      border-radius: 5px;
+      max-width: 80%;
+      margin: 10px auto;
+    }
+    #quoteDisplay {
+      font-size: 20px;
+      font-style: italic;
+      margin-top: 80px;
+    }
+    #affirmationDisplay {
+      font-size: 18px;
+      margin-bottom: 80px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hamburger Menu -->
+  <span id="openNav" onclick="openNav()">&#9776;</span>
+
+  <!-- Sidebar for Settings -->
+  <div id="mySidenav" class="sidenav">
+    <span class="closebtn" onclick="closeNav()">&times;</span>
+    <div class="settings-content">
+      <h2>Settings</h2>
+      <label for="studyDuration">Study Duration (minutes):</label>
+      <select id="studyDuration">
+        <option value="1">1 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="45">45 minutes</option>
+        <option value="60">60 minutes</option>
+      </select>
+      <label for="quoteInput">Motivational Quote:</label>
+      <input type="text" id="quoteInput" placeholder="Enter motivational quote">
+      <label for="affirmationInput">Affirmation Text:</label>
+      <input type="text" id="affirmationInput" placeholder="Enter affirmation text">
+      <!-- Optional: Alarm Sound input -->
+      <label for="audioInput">Select Alarm Sound:</label>
+      <input type="file" id="audioInput" accept="audio/*">
+      <button onclick="updateSettings()">Update</button>
+    </div>
+  </div>
+
+  <!-- Main Timer Container -->
+  <div class="timer-container">
+    <!-- Date & Time Display -->
+    <div class="date-time">
+      <div class="date" id="dateDisplay">Monday, 1/1/2025</div>
+      <div class="time" id="timeDisplay">00:00:00</div>
+    </div>
+    <!-- Quote Display -->
+    <div id="quoteDisplay">Stay focused and productive!</div>
+    <!-- Timer Circle with Animated Icon -->
+    <div class="timer-circle">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <circle cx="110" cy="110" r="100" stroke="#e0e0e0" stroke-width="20" fill="none" />
+        <circle id="progress" cx="110" cy="110" r="100" stroke="#4caf50" stroke-width="20" fill="none" stroke-dasharray="628" stroke-dashoffset="0" />
+      </svg>
+      <!-- Animated Icon: Replace these with your own animated GIFs or images -->
+      <img id="icon" src="reading.gif" alt="Study Icon" onerror="this.onerror=null; this.src='reading.gif';">
+      <div id="timerDisplay">25:00</div>
+    </div>
+    <!-- Start/Stop Button -->
+    <div class="controls">
+      <button id="toggleButton">Start</button>
+    </div>
+    <!-- Affirmation Display -->
+    <div id="affirmationDisplay">I am capable and strong.</div>
+  </div>
+
+  <!-- Alarm audio element (ensure default-alarm.mp3 exists or update the path) -->
+  <audio id="alarm" src="martian_soundtrack.mp3"></audio>
+
+  <script>
+    // Get element references
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    const affirmationDisplay = document.getElementById('affirmationDisplay');
+    const quoteInput = document.getElementById('quoteInput');
+    const affirmationInput = document.getElementById('affirmationInput');
+    const studyDurationInput = document.getElementById('studyDuration');
+    const audioInput = document.getElementById('audioInput');
+    const alarm = document.getElementById('alarm');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const toggleButton = document.getElementById('toggleButton');
+
+    // Load stored Quote and Affirmation from localStorage, if available
+    const storedQuote = localStorage.getItem('quote');
+    if (storedQuote) {
+      quoteDisplay.textContent = storedQuote;
+      quoteInput.value = storedQuote;
+    } else {
+      quoteInput.value = 'Stay focused and productive!';
+    }
+    const storedAffirmation = localStorage.getItem('affirmation');
+    if (storedAffirmation) {
+      affirmationDisplay.textContent = storedAffirmation;
+      affirmationInput.value = storedAffirmation;
+    } else {
+      affirmationInput.value = 'I am capable and strong.';
+    }
+
+    // Sidebar functions (declared in global scope)
+    function openNav() {
+      document.getElementById('mySidenav').style.width = '250px';
+    }
+    function closeNav() {
+      document.getElementById('mySidenav').style.width = '0';
+    }
+    function updateSettings() {
+      // Save settings to localStorage and update displays
+      const quote = quoteInput.value;
+      const affirmation = affirmationInput.value;
+      localStorage.setItem('quote', quote);
+      localStorage.setItem('affirmation', affirmation);
+      quoteDisplay.textContent = quote;
+      affirmationDisplay.textContent = affirmation;
+      
+      // Update study duration and reset timer if not running
+      customStudyTime = parseInt(studyDurationInput.value) || 25;
+      customBreakTime = customStudyTime / 5;
+      if (!isRunning) {
+        currentTime = customStudyTime * 60;
+        document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+        document.getElementById('progress').style.strokeDashoffset = 0;
+      }
+      closeNav();
+    }
+
+    // Update date and time display (two rows: date and live time)
+    function updateDateTime() {
+      const now = new Date();
+      const options = { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' };
+      dateDisplay.textContent = now.toLocaleDateString(undefined, options);
+      timeDisplay.textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Timer functionality variables
+    let customStudyTime = parseInt(studyDurationInput.value) || 25;
+    let customBreakTime = customStudyTime / 5;
+    let isRunning = false;
+    let isStudySession = true;
+    let currentTime = customStudyTime * 60;
+    let timerInterval;
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+    function updateTimer() {
+      if (currentTime > 0) {
+        currentTime -= 1;
+      } else {
+        // Play alarm sound
+        alarm.play();
+        if (isStudySession) {
+          isStudySession = false;
+          currentTime = customBreakTime * 60;
+          document.getElementById('icon').src = 'football.gif';
+          document.getElementById('progress').style.stroke = '#2196f3';
+        } else {
+          isStudySession = true;
+          currentTime = customStudyTime * 60;
+          document.getElementById('icon').src = 'reading.gif';
+          document.getElementById('progress').style.stroke = '#4caf50';
+        }
+      }
+      document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+      const totalTime = isStudySession ? customStudyTime * 60 : customBreakTime * 60;
+      const progressRatio = currentTime / totalTime;
+      const dashOffset = 628 * (1 - progressRatio);
+      document.getElementById('progress').style.strokeDashoffset = dashOffset;
+    }
+    toggleButton.addEventListener('click', function() {
+      // Unlock audio on first user gesture
+      if (alarm.paused) {
+        alarm.play().then(() => { alarm.pause(); }).catch(err => console.error('Audio unlock failed:', err));
+      }
+      if (!isRunning) {
+        isRunning = true;
+        this.textContent = 'Stop';
+        currentTime = isStudySession ? customStudyTime * 60 : customBreakTime * 60;
+        timerInterval = setInterval(updateTimer, 1000);
+      } else {
+        isRunning = false;
+        this.textContent = 'Start';
+        clearInterval(timerInterval);
+        isStudySession = true;
+        currentTime = customStudyTime * 60;
+        document.getElementById('icon').src = 'reading.gif';
+        document.getElementById('progress').style.stroke = '#4caf50';
+        document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+        document.getElementById('progress').style.strokeDashoffset = 0;
+        alarm.pause();
+        alarm.currentTime = 0;
+      }
+    });
+
+    // Audio file selection with persistence
+    const storedAudio = localStorage.getItem('alarmAudio');
+    if (storedAudio) {
+      alarm.src = storedAudio;
+    }
+    audioInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          alarm.src = e.target.result;
+          localStorage.setItem('alarmAudio', e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+</body>
+</html>
