@@ -131,6 +131,12 @@
       font-size: 24px;
       font-weight: bold;
     }
+    /* Break message below timer circle */
+    #breakMessage {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #333;
+    }
     /* Start/Stop Button */
     .controls button {
       padding: 10px 20px;
@@ -145,7 +151,7 @@
     .controls button:hover {
       background-color: #45a049;
     }
-    /* Quote and Affirmation */
+    /* Fixed Quote and Affirmation */
     #quoteDisplay,
     #affirmationDisplay {
       background: rgba(255, 255, 255, 0.8);
@@ -176,15 +182,11 @@
       <h2>Settings</h2>
       <label for="studyDuration">Study Duration (minutes):</label>
       <select id="studyDuration">
-        <option value="25">25 minutes</option>
+        <option value="1">25 minutes</option>
         <option value="30">30 minutes</option>
         <option value="45">45 minutes</option>
         <option value="60">60 minutes</option>
       </select>
-      <label for="quoteInput">Motivational Quote:</label>
-      <input type="text" id="quoteInput" placeholder="Enter motivational quote">
-      <label for="affirmationInput">Affirmation Text:</label>
-      <input type="text" id="affirmationInput" placeholder="Enter affirmation text">
       <!-- Optional: Alarm Sound input -->
       <label for="audioInput">Select Alarm Sound:</label>
       <input type="file" id="audioInput" accept="audio/*">
@@ -199,69 +201,64 @@
       <div class="date" id="dateDisplay">Monday, 1/1/2025</div>
       <div class="time" id="timeDisplay">00:00:00</div>
     </div>
-    <!-- Quote Display -->
-    <div style="text-align: center; margin: 20px;">
-        <img 
-          src="ganesha.png" 
-          alt="Ganesh Idol" 
-          style="width: 50px; height: auto;"
-        />
-        <div style="margin-top: 8px; font-style: italic; font-weight: bold;">
-          | Om gam ganapathey namah |
-        </div>
+    
+    <!-- Ganesh Image with Mantra (Hard-coded) -->
+    <div id="quoteDisplay" style="text-align: center; margin: 20px;">
+      <img src="ganesha.png" alt="Ganesh Idol" style="width: 50px; height: auto;">
+      <div style="margin-top: 8px; font-style: italic; font-weight: bold;">
+        | ಓಂ ಗಂ ಗಣಪತಯೇ ನಮಃ |
+      </div>
     </div>
-    <!-- <div id="quoteDisplay">| ಓಂ ಗಂ ಗಣಪತಯೇ ನಮಃ | </div> -->
-      
-
+    
     <!-- Timer Circle with Animated Icon -->
     <div class="timer-circle">
       <svg width="220" height="220" viewBox="0 0 220 220">
         <circle cx="110" cy="110" r="100" stroke="#e0e0e0" stroke-width="20" fill="none" />
         <circle id="progress" cx="110" cy="110" r="100" stroke="#4caf50" stroke-width="20" fill="none" stroke-dasharray="628" stroke-dashoffset="0" />
       </svg>
-      <!-- Animated Icon: Replace these with your own animated GIFs or images -->
+      <!-- Animated Icon: Use existing files or update file names as needed -->
       <img id="icon" src="reading.gif" alt="Study Icon" onerror="this.onerror=null; this.src='reading.gif';">
       <div id="timerDisplay">25:00</div>
     </div>
+    
+    <!-- Break Message -->
+    <div id="breakMessage">You will have 5 mins of break, keep focused</div>
+    
     <!-- Start/Stop Button -->
     <div class="controls">
       <button id="toggleButton">Start</button>
     </div>
-    <!-- Affirmation Display -->
-    <div id="affirmationDisplay">Remembering the concepts I study makes me Happy 😀</div>
+    
+    <!-- Affirmation Display (Hard-coded) -->
+    <div id="affirmationDisplay">"Remembering the concepts I study makes me Happy" 😀</div>
   </div>
 
-  <!-- Alarm audio element (ensure default-alarm.mp3 exists or update the path) -->
+  <!-- Alarm audio element (ensure martian_soundtrack.mp3 exists or update the path) -->
   <audio id="alarm" src="martian_soundtrack.mp3"></audio>
 
   <script>
+    // Global timer variables (declared first so updateSettings can use them)
+    let customStudyTime = parseInt(document.getElementById('studyDuration').value) || 25;
+    let customBreakTime = customStudyTime / 5;
+    let isRunning = false;
+    let isStudySession = true;
+    let currentTime = customStudyTime * 60;
+    let timerInterval;
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
     // Get element references
-    const quoteDisplay = document.getElementById('quoteDisplay');
-    const affirmationDisplay = document.getElementById('affirmationDisplay');
-    const quoteInput = document.getElementById('quoteInput');
-    const affirmationInput = document.getElementById('affirmationInput');
     const studyDurationInput = document.getElementById('studyDuration');
     const audioInput = document.getElementById('audioInput');
     const alarm = document.getElementById('alarm');
     const dateDisplay = document.getElementById('dateDisplay');
     const timeDisplay = document.getElementById('timeDisplay');
     const toggleButton = document.getElementById('toggleButton');
-
-    // Load stored Quote and Affirmation from localStorage, if available
-    const storedQuote = localStorage.getItem('quote');
-    if (storedQuote) {
-      quoteDisplay.textContent = storedQuote;
-      quoteInput.value = storedQuote;
-    } else {
-      quoteInput.value = 'Stay focused and productive!';
-    }
-    const storedAffirmation = localStorage.getItem('affirmation');
-    if (storedAffirmation) {
-      affirmationDisplay.textContent = storedAffirmation;
-      affirmationInput.value = storedAffirmation;
-    } else {
-      affirmationInput.value = 'I am capable and strong.';
-    }
+    const breakMessage = document.getElementById('breakMessage');
 
     // Sidebar functions (declared in global scope)
     function openNav() {
@@ -270,18 +267,15 @@
     function closeNav() {
       document.getElementById('mySidenav').style.width = '0';
     }
+    function updateBreakMessage() {
+      // Update the break message based on customBreakTime (in minutes)
+      breakMessage.textContent = `You will have ${Math.round(customBreakTime)} mins of break, keep focused`;
+    }
     function updateSettings() {
-      // Save settings to localStorage and update displays
-      const quote = quoteInput.value;
-      const affirmation = affirmationInput.value;
-      localStorage.setItem('quote', quote);
-      localStorage.setItem('affirmation', affirmation);
-      quoteDisplay.textContent = quote;
-      affirmationDisplay.textContent = affirmation;
-      
       // Update study duration and reset timer if not running
       customStudyTime = parseInt(studyDurationInput.value) || 25;
       customBreakTime = customStudyTime / 5;
+      updateBreakMessage();
       if (!isRunning) {
         currentTime = customStudyTime * 60;
         document.getElementById('timerDisplay').textContent = formatTime(currentTime);
@@ -300,18 +294,7 @@
     setInterval(updateDateTime, 1000);
     updateDateTime();
 
-    // Timer functionality variables
-    let customStudyTime = parseInt(studyDurationInput.value) || 25;
-    let customBreakTime = customStudyTime / 5;
-    let isRunning = false;
-    let isStudySession = true;
-    let currentTime = customStudyTime * 60;
-    let timerInterval;
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const s = (seconds % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    }
+    // Timer update function
     function updateTimer() {
       if (currentTime > 0) {
         currentTime -= 1;
@@ -321,11 +304,13 @@
         if (isStudySession) {
           isStudySession = false;
           currentTime = customBreakTime * 60;
+          // Update break icon; ensure "football.gif" exists
           document.getElementById('icon').src = 'football.gif';
           document.getElementById('progress').style.stroke = '#2196f3';
         } else {
           isStudySession = true;
           currentTime = customStudyTime * 60;
+          // Update study icon; ensure "reading.gif" exists
           document.getElementById('icon').src = 'reading.gif';
           document.getElementById('progress').style.stroke = '#4caf50';
         }
@@ -336,6 +321,7 @@
       const dashOffset = 628 * (1 - progressRatio);
       document.getElementById('progress').style.strokeDashoffset = dashOffset;
     }
+
     toggleButton.addEventListener('click', function() {
       // Unlock audio on first user gesture
       if (alarm.paused) {
@@ -377,6 +363,9 @@
         reader.readAsDataURL(file);
       }
     });
+
+    // Initialize the break message on page load
+    updateBreakMessage();
   </script>
 </body>
 </html>
