@@ -206,7 +206,7 @@
     <div id="quoteDisplay" style="text-align: center; margin: 20px;">
       <img src="ganesha.png" alt="Ganesh Idol" style="width: 50px; height: auto;">
       <div style="margin-top: 8px; font-style: italic; font-weight: bold;">
-        | ಓಂ ಗಂ ಗಣಪತಯೇ ನಮಃ |
+        "Study hard, learn, grow, shine!"
       </div>
     </div>
     
@@ -287,7 +287,7 @@
     // Update date and time display (two rows: date and live time)
     function updateDateTime() {
       const now = new Date();
-      const options = { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' };
+      const options = { weekday: 'short', day: 'numeric', month: 'numeric', year: 'numeric' };
       dateDisplay.textContent = now.toLocaleDateString(undefined, options);
       timeDisplay.textContent = now.toLocaleTimeString();
     }
